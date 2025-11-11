@@ -3,5 +3,8 @@ name = "agentic-ai-ivr-demo"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = []
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.121.1",
+    "websockets>=15.0.1",
+]
