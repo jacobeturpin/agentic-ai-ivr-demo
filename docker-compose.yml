@@ -1,0 +1,19 @@
+services:
+  ws-service:
+    build:
+      context: ./ws-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    # Optional: Enable for hot-reload during development
+    # volumes:
+    #   - ./ws-service:/app
+    # environment:
+    #   - RELOAD=true
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
