@@ -6,9 +6,11 @@ A WebSocket-based service for interactive voice response demonstrations using ag
 
 ```
 docker-compose.yml       # Docker Compose configuration
+.env.example             # Example environment variables
 ws-service/              # WebSocket service
     Dockerfile           # Service container definition
     main.py              # FastAPI WebSocket application
+    config.py            # Configuration management
     pyproject.toml       # Python project configuration
     uv.lock              # Dependency lock file
 ```
@@ -22,21 +24,27 @@ ws-service/              # WebSocket service
 
 ### Quick Start
 
-1. **Build the services:**
+1. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred settings
+   ```
+
+2. **Build the services:**
    ```bash
    docker-compose build
    ```
 
-2. **Start the services:**
+3. **Start the services:**
    ```bash
    docker-compose up
    ```
 
-3. **Access the WebSocket service:**
-   - WebSocket endpoint: `ws://localhost:8000/ws`
+4. **Access the WebSocket service:**
+   - WebSocket endpoint: `ws://localhost:8000/ws/test`
    - Health check: `http://localhost:8000/`
 
-4. **Stop the services:**
+5. **Stop the services:**
    ```bash
    docker-compose down
    ```
@@ -56,6 +64,61 @@ docker-compose logs -f ws-service
 **Run in detached mode:**
 ```bash
 docker-compose up -d
+```
+
+## Configuration
+
+The application uses environment variables for configuration. Copy `.env.example` to `.env` and customize as needed:
+
+```bash
+cp .env.example .env
+```
+
+### Available Configuration Options
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `APP_NAME` | Application name | "Agentic AI IVR Demo" | any string |
+| `APP_VERSION` | Application version | "0.1.0" | any string |
+| `HOST` | Server host | "0.0.0.0" | any valid host |
+| `PORT` | Server port | 8000 | any valid port |
+| `LOG_LEVEL` | Logging level | "INFO" | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| `LOG_FORMAT` | Log output format | "text" | text, json |
+| `ENVIRONMENT` | Environment name | "development" | development, staging, production |
+
+### Logging
+
+The application supports two logging formats:
+
+**Text Format (Human-Readable):**
+```
+2025-11-12 10:30:45 - main - INFO - Application starting
+```
+
+**JSON Format (Structured):**
+```json
+{
+  "timestamp": "2025-11-12T10:30:45.123456",
+  "level": "INFO",
+  "logger": "main",
+  "message": "Application starting",
+  "module": "main",
+  "function": "startup_event",
+  "line": 85
+}
+```
+
+To change log level or format, update your `.env` file:
+```bash
+LOG_LEVEL=DEBUG
+LOG_FORMAT=json
+```
+
+Or override in `docker-compose.yml`:
+```yaml
+environment:
+  - LOG_LEVEL=DEBUG
+  - LOG_FORMAT=json
 ```
 
 ## Testing the WebSocket Endpoint
