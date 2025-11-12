@@ -7,4 +7,6 @@ requires-python = ">=3.14"
 dependencies = [
     "fastapi[standard]>=0.121.1",
     "websockets>=15.0.1",
+    "python-dotenv>=1.0.0",
+    "pydantic-settings>=2.0.0",
 ]

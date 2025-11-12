@@ -4,14 +4,19 @@ services:
       context: ./ws-service
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:8000"
     networks:
       - app-network
+    # Load environment variables from .env file
+    env_file:
+      - .env
+    # Optional: Override specific environment variables
+    # environment:
+    #   - LOG_LEVEL=DEBUG
+    #   - LOG_FORMAT=json
     # Optional: Enable for hot-reload during development
     # volumes:
     #   - ./ws-service:/app
-    # environment:
-    #   - RELOAD=true
     restart: unless-stopped
 
 networks:
