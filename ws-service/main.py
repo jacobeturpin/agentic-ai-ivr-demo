@@ -2,7 +2,8 @@
 import json
 import logging
 import sys
-from datetime import datetime
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -17,7 +18,7 @@ def setup_logging():
         class JsonFormatter(logging.Formatter):
             def format(self, record):
                 log_data = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "level": record.levelname,
                     "logger": record.name,
                     "message": record.getMessage(),
@@ -72,16 +73,9 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Log application startup information."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Log application startup information.
     logger.info(
         "Application starting",
         extra={
@@ -94,18 +88,21 @@ async def startup_event():
             "log_format": settings.log_format,
         }
     )
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Log application shutdown."""
+    yield
+    # Log application shutdown.
     logger.info("Application shutting down")
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+)
 
 
 @app.get("/")
 def read_root():
-    """Health check endpoint."""
-    logger.debug("Health check endpoint called")
+    """Root endpoint."""
+    logger.debug("Root endpoint called")
     return {
         "app": settings.app_name,
         "version": settings.app_version,
