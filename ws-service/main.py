@@ -5,9 +5,10 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 
 from config import settings
+from routes import api_router, websocket_router
 
 # Configure logging based on settings
 def setup_logging():
@@ -96,74 +97,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
+    lifespan=lifespan,
 )
 
-
-@app.get("/")
-def read_root():
-    """Root endpoint."""
-    logger.debug("Root endpoint called")
-    return {
-        "app": settings.app_name,
-        "version": settings.app_version,
-        "status": "healthy",
-        "environment": settings.environment,
-    }
-
-
-@app.websocket("/ws/test")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket test endpoint."""
-    client_host = websocket.client.host if websocket.client else "unknown"
-    client_port = websocket.client.port if websocket.client else 0
-
-    await websocket.accept()
-    logger.info(
-        "WebSocket connection established",
-        extra={
-            "client_host": client_host,
-            "client_port": client_port,
-        }
-    )
-
-    try:
-        while True:
-            data = await websocket.receive_text()
-            logger.debug(
-                "Received WebSocket message",
-                extra={
-                    "client_host": client_host,
-                    "message_length": len(data),
-                }
-            )
-
-            response = f"Message text was: {data}"
-            await websocket.send_text(response)
-
-            logger.debug(
-                "Sent WebSocket response",
-                extra={
-                    "client_host": client_host,
-                    "response_length": len(response),
-                }
-            )
-    except WebSocketDisconnect:
-        logger.info(
-            "WebSocket client disconnected",
-            extra={
-                "client_host": client_host,
-                "client_port": client_port,
-            }
-        )
-    except Exception as e:
-        logger.error(
-            "WebSocket error occurred",
-            exc_info=True,
-            extra={
-                "client_host": client_host,
-                "error_type": type(e).__name__,
-            }
-        )
+# Include routers
+app.include_router(api_router)
+app.include_router(websocket_router)
 
 
 def main():
