@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 
 from config import settings
+from connection_manager import connection_manager
 from routes import api_router, websocket_router
 
 # Configure logging based on settings
@@ -90,7 +91,20 @@ async def lifespan(app: FastAPI):
         }
     )
     yield
-    # Log application shutdown.
+    # Cleanup: close all active WebSocket connections
+    active_count = connection_manager.active_count()
+    if active_count > 0:
+        logger.info(
+            "Closing active WebSocket connections",
+            extra={"active_sessions": active_count}
+        )
+        closed_count = await connection_manager.close_all()
+        logger.info(
+            "WebSocket connections closed",
+            extra={"closed_count": closed_count}
+        )
+
+    # Log application shutdown
     logger.info("Application shutting down")
 
 # Create FastAPI app
