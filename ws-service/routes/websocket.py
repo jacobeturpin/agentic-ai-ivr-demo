@@ -3,6 +3,9 @@
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
+
+from models.media_streaming import Message
 
 logger = logging.getLogger(__name__)
 
@@ -80,29 +83,42 @@ async def receive_media(websocket: WebSocket):
 
     try:
         message_count = 0
+        has_seen_media = False
 
         while True:
             media = await websocket.receive_json()
 
-            if media['event'] == "connected":
-                logger.info("Connected Message received", media)
-            elif media['event'] == "start":
-                logger.info("Start Message received", media)
-            elif media['event'] == "media":
+            # Validate message against defined types
+            try:
+                message = Message.model_validate(media)
+            except ValidationError as e:
+                logger.warning(
+                    "Invalid message format, dropping",
+                    extra={
+                        "client_host": client_host,
+                        "error": str(e),
+                        "raw_message": media,
+                    }
+                )
+                continue
+
+            if message.event == "connected":
+                logger.info("Connected Message received", extra={"message": media})
+            elif message.event == "start":
+                logger.info("Start Message received", extra={"message": media})
+            elif message.event == "media":
                 if not has_seen_media:
-                    logger.info("Media message", media)
+                    logger.info("Media message", extra={"message": media})
                     logger.info("Additional media messages from WebSocket are being suppressed....")
                     has_seen_media = True
-            elif media['event'] == "closed":
-                logger.info("Closed Message received", media)
+            elif message.event == "stop":
+                logger.info("Stop Message received", extra={"message": media})
                 break
-            else:
-                logger.warning("Incorrectly formatted message was ignored", media)
-                continue
-            count += 1
 
-        logger.info("Connection closed. Received a total of {} messages".format(count))
-        websocket.close()
+            message_count += 1
+
+        logger.info("Connection closed. Received a total of {} messages".format(message_count))
+        await websocket.close()
 
     except WebSocketDisconnect:
         logger.info(
