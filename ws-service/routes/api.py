@@ -21,3 +21,9 @@ def read_root():
         "status": "healthy",
         "environment": settings.environment,
     }
+
+@router.get("/health")
+def health():
+    return {
+        "status": "okay"
+    }
