@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Environment
     environment: Literal["development", "staging", "production"] = "development"
 
+    # Twilio Settings
+    twilio_auth_token: str = None
+
     @property
     def log_level_int(self) -> int:
         """Convert log level string to logging module constant."""
