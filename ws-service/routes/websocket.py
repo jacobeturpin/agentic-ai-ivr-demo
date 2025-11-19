@@ -2,10 +2,11 @@
 
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from connection_manager import connection_manager
+from dependencies import validate_twilio_websocket
 from models.media_streaming import Message
 
 logger = logging.getLogger(__name__)
@@ -113,7 +114,10 @@ async def websocket_endpoint(websocket: WebSocket):
         )
 
 @router.websocket("/ws/media")
-async def receive_media(websocket: WebSocket):
+async def receive_media(
+    websocket: WebSocket,
+    _validated: None = Depends(validate_twilio_websocket)
+):
     """Receive media from Twilio Media Streaming."""
     client_host, client_port, headers, query_params = extract_connection_metadata(websocket)
 

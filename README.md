@@ -85,6 +85,7 @@ cp .env.example .env
 | `LOG_LEVEL` | Logging level | "INFO" | DEBUG, INFO, WARNING, ERROR, CRITICAL |
 | `LOG_FORMAT` | Log output format | "text" | text, json |
 | `ENVIRONMENT` | Environment name | "development" | development, staging, production |
+| `TWILIO_AUTH_TOKEN` | Auth token for Twilio API usage | None | valid API token as a string |
 
 ### Logging
 
