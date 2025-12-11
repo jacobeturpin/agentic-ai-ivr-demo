@@ -1,4 +1,5 @@
 """Configuration management using pydantic-settings."""
+
 import logging
 from typing import Literal
 

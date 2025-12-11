@@ -1,4 +1,5 @@
 """WebSocket service with proper logging and configuration."""
+
 import json
 import logging
 import sys
@@ -10,6 +11,7 @@ from fastapi import FastAPI
 from config import settings
 from connection_manager import connection_manager
 from routes import api_router, websocket_router
+
 
 # Configure logging based on settings
 def setup_logging():
@@ -34,11 +36,29 @@ def setup_logging():
 
                 # Add any extra fields
                 for key, value in record.__dict__.items():
-                    if key not in ["name", "msg", "args", "created", "filename", "funcName",
-                                   "levelname", "levelno", "lineno", "module", "msecs",
-                                   "message", "pathname", "process", "processName",
-                                   "relativeCreated", "thread", "threadName", "exc_info",
-                                   "exc_text", "stack_info"]:
+                    if key not in [
+                        "name",
+                        "msg",
+                        "args",
+                        "created",
+                        "filename",
+                        "funcName",
+                        "levelname",
+                        "levelno",
+                        "lineno",
+                        "module",
+                        "msecs",
+                        "message",
+                        "pathname",
+                        "process",
+                        "processName",
+                        "relativeCreated",
+                        "thread",
+                        "threadName",
+                        "exc_info",
+                        "exc_text",
+                        "stack_info",
+                    ]:
                         log_data[key] = value
 
                 return json.dumps(log_data)
@@ -48,7 +68,7 @@ def setup_logging():
         # Text formatter for human-readable logging
         formatter = logging.Formatter(
             fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
     # Configure root logger
@@ -75,6 +95,7 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Log application startup information.
@@ -88,7 +109,7 @@ async def lifespan(app: FastAPI):
             "port": settings.port,
             "log_level": settings.log_level,
             "log_format": settings.log_format,
-        }
+        },
     )
     yield
     # Cleanup: close all active WebSocket connections
@@ -96,16 +117,16 @@ async def lifespan(app: FastAPI):
     if active_count > 0:
         logger.info(
             "Closing active WebSocket connections",
-            extra={"active_sessions": active_count}
+            extra={"active_sessions": active_count},
         )
         closed_count = await connection_manager.close_all()
         logger.info(
-            "WebSocket connections closed",
-            extra={"closed_count": closed_count}
+            "WebSocket connections closed", extra={"closed_count": closed_count}
         )
 
     # Log application shutdown
     logger.info("Application shutting down")
+
 
 # Create FastAPI app
 app = FastAPI(
