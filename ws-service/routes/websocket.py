@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
+from twilio.twiml.voice_response import VoiceResponse
 
 from connection_manager import connection_manager
 from dependencies import validate_twilio_websocket
@@ -14,7 +15,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def extract_connection_metadata(websocket: WebSocket) -> tuple[str, int, dict[str, str], dict[str, str]]:
+def extract_connection_metadata(
+    websocket: WebSocket,
+) -> tuple[str, int, dict[str, str], dict[str, str]]:
     """Extract client metadata from WebSocket connection."""
     client_host = websocket.client.host if websocket.client else "unknown"
     client_port = websocket.client.port if websocket.client else 0
@@ -35,7 +38,9 @@ def extract_connection_metadata(websocket: WebSocket) -> tuple[str, int, dict[st
 @router.websocket("/ws/test")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket test endpoint."""
-    client_host, client_port, headers, query_params = extract_connection_metadata(websocket)
+    client_host, client_port, headers, query_params = extract_connection_metadata(
+        websocket
+    )
 
     await websocket.accept()
 
@@ -57,7 +62,7 @@ async def websocket_endpoint(websocket: WebSocket):
             "headers": headers,
             "query_params": query_params,
             "active_sessions": connection_manager.active_count(),
-        }
+        },
     )
 
     try:
@@ -69,7 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "session_id": session_id,
                     "client_host": client_host,
                     "message_length": len(data),
-                }
+                },
             )
 
             response = f"Message text was: {data}"
@@ -81,7 +86,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "session_id": session_id,
                     "client_host": client_host,
                     "response_length": len(response),
-                }
+                },
             )
     except WebSocketDisconnect:
         logger.info(
@@ -90,7 +95,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "session_id": session_id,
                 "client_host": client_host,
                 "client_port": client_port,
-            }
+            },
         )
     except Exception as e:
         logger.error(
@@ -100,7 +105,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "session_id": session_id,
                 "client_host": client_host,
                 "error_type": type(e).__name__,
-            }
+            },
         )
     finally:
         # Cleanup: remove session from tracking
@@ -110,16 +115,18 @@ async def websocket_endpoint(websocket: WebSocket):
             extra={
                 "session_id": session_id,
                 "active_sessions": connection_manager.active_count(),
-            }
+            },
         )
+
 
 @router.websocket("/ws/media")
 async def receive_media(
-    websocket: WebSocket,
-    _validated: None = Depends(validate_twilio_websocket)
+    websocket: WebSocket, _validated: None = Depends(validate_twilio_websocket)
 ):
     """Receive media from Twilio Media Streaming."""
-    client_host, client_port, headers, query_params = extract_connection_metadata(websocket)
+    client_host, client_port, headers, query_params = extract_connection_metadata(
+        websocket
+    )
 
     await websocket.accept()
 
@@ -141,7 +148,7 @@ async def receive_media(
             "headers": headers,
             "query_params": query_params,
             "active_sessions": connection_manager.active_count(),
-        }
+        },
     )
 
     try:
@@ -162,14 +169,14 @@ async def receive_media(
                         "client_host": client_host,
                         "error": str(e),
                         "raw_message": media,
-                    }
+                    },
                 )
                 continue
 
             if message.event == "connected":
                 logger.info(
                     "Connected Message received",
-                    extra={"session_id": session_id, "message": media}
+                    extra={"session_id": session_id, "message": media},
                 )
             elif message.event == "start":
                 # Extract Twilio metadata from start message
@@ -186,20 +193,22 @@ async def receive_media(
                         "session_id": session_id,
                         "message": media,
                         **twilio_metadata,
-                    }
+                    },
                 )
             elif message.event == "media":
                 if not has_seen_media:
                     logger.info(
                         "Media message",
-                        extra={"session_id": session_id, "message": media}
+                        extra={"session_id": session_id, "message": media},
                     )
-                    logger.info("Additional media messages from WebSocket are being suppressed....")
+                    logger.info(
+                        "Additional media messages from WebSocket are being suppressed...."
+                    )
                     has_seen_media = True
             elif message.event == "stop":
                 logger.info(
                     "Stop Message received",
-                    extra={"session_id": session_id, "message": media}
+                    extra={"session_id": session_id, "message": media},
                 )
                 break
 
@@ -210,7 +219,7 @@ async def receive_media(
             extra={
                 "session_id": session_id,
                 "message_count": message_count,
-            }
+            },
         )
         await websocket.close()
 
@@ -221,7 +230,7 @@ async def receive_media(
                 "session_id": session_id,
                 "client_host": client_host,
                 "client_port": client_port,
-            }
+            },
         )
     except Exception as e:
         logger.error(
@@ -231,7 +240,7 @@ async def receive_media(
                 "session_id": session_id,
                 "client_host": client_host,
                 "error_type": type(e).__name__,
-            }
+            },
         )
     finally:
         # Cleanup: remove session from tracking
@@ -241,8 +250,14 @@ async def receive_media(
             extra={
                 "session_id": session_id,
                 "active_sessions": connection_manager.active_count(),
-            }
+            },
         )
 
 
+@router.websocket("/ws/media/test")
+async def receive_media_test(websocket: WebSocket):
+    """Respond to incoming calls with a simple text message."""
 
+    resp = VoiceResponse()
+    resp.say("Hello from your pals at Twilio! Have fun.")
+    return str(resp)
