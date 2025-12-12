@@ -42,6 +42,15 @@ async def websocket_endpoint(websocket: WebSocket):
         websocket
     )
 
+    # Reject connections during shutdown
+    if connection_manager.is_shutting_down():
+        logger.info(
+            "Rejecting WebSocket connection - server is shutting down",
+            extra={"client_host": client_host, "client_port": client_port},
+        )
+        await websocket.close(code=1001, reason="Server is shutting down")
+        return
+
     await websocket.accept()
 
     # Register session
@@ -127,6 +136,15 @@ async def receive_media(
     client_host, client_port, headers, query_params = extract_connection_metadata(
         websocket
     )
+
+    # Reject connections during shutdown
+    if connection_manager.is_shutting_down():
+        logger.info(
+            "Rejecting WebSocket connection - server is shutting down",
+            extra={"client_host": client_host, "client_port": client_port},
+        )
+        await websocket.close(code=1001, reason="Server is shutting down")
+        return
 
     await websocket.accept()
 

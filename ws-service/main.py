@@ -112,6 +112,10 @@ async def lifespan(app: FastAPI):
         },
     )
     yield
+    # Signal shutdown to reject new connections
+    logger.info("Initiating graceful shutdown - setting shutdown flag")
+    connection_manager.begin_shutdown()
+
     # Cleanup: close all active WebSocket connections
     active_count = connection_manager.active_count()
     if active_count > 0:

@@ -28,6 +28,7 @@ class ConnectionManager:
 
     def __init__(self):
         self._sessions: dict[str, Session] = {}
+        self._is_shutting_down: bool = False
 
     def connect(
         self,
@@ -83,6 +84,18 @@ class ConnectionManager:
     def active_count(self) -> int:
         """Return the number of active connections."""
         return len(self._sessions)
+
+    def begin_shutdown(self) -> None:
+        """Mark the manager as shutting down to reject new connections."""
+        if not self._is_shutting_down:
+            self._is_shutting_down = True
+            logger.info(
+                "Connection manager entering shutdown mode - rejecting new connections"
+            )
+
+    def is_shutting_down(self) -> bool:
+        """Check if the manager is in shutdown mode."""
+        return self._is_shutting_down
 
     def get_all_sessions(self) -> list[Session]:
         """Return all active sessions."""
