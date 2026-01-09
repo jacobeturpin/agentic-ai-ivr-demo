@@ -18,6 +18,17 @@ services:
     # volumes:
     #   - ./ws-service:/app
     restart: unless-stopped
+  mock-api-service:
+    build:
+      context: ./mock_api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    networks:
+      - app-network
+    env_file:
+      - .env
+    restart: unless-stopped
 
 networks:
   app-network:
