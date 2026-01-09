@@ -29,6 +29,21 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_started
+  db:
+    image: postgres
+    shm_size: 128mb
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PWD}
+
+
+    restart: always
+
 
 networks:
   app-network:
