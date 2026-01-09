@@ -1,0 +1,21 @@
+# Mock API Service
+
+This service is intended to be a Mock API service for project demo purposes. This service aims to implement a 
+REST API that is a subset of the functionally that would be present in a Professional Services Automation (PSA)
+tool leveraged by Managed Service Providers (MSP) such as tools like ConnectWise PSA, Kaseya BMS, etc. In particular,
+this API is intended to cover the essentially needed for service delivery including by not limited to:
+
+* Companies
+* Contacts
+* Devices
+* Tickets
+
+Functionality is intentionally limited to the scope of features needed/leveraged by the IVR Demo.
+
+## Tech Stack
+
+This service is implemented as a Python-based API service leveraging:
+
+* FastAPI
+* Pydantic
+* SQLModel
